@@ -3,20 +3,17 @@ import csv
 import random
 import pandas as pd
 
-# ===================== STEP 1: READ CSV =====================
+# ===================== STEP 1: READ CSV (AUTO LOAD) =====================
 
 def read_csv_to_dict(file_path):
     program_ratings = {}
-
     with open(file_path, mode='r', newline='') as file:
         reader = csv.reader(file)
         header = next(reader)  # skip header
-
         for row in reader:
             program = row[0]
             ratings = [float(x) if x else 0.0 for x in row[1:]]
             program_ratings[program] = ratings
-
     return program_ratings
 
 
@@ -89,11 +86,11 @@ st.title("📺 Genetic Algorithm TV Schedule Optimizer")
 
 st.sidebar.header("⚙️ Parameters")
 
-# Upload CSV file
-uploaded_file = st.sidebar.file_uploader("Upload Program Ratings CSV", type=["csv"])
+# Auto-load CSV file (no upload needed)
+file_path = "program_ratings_modified.csv"
 
-if uploaded_file:
-    ratings = read_csv_to_dict(uploaded_file)
+try:
+    ratings = read_csv_to_dict(file_path)
     all_programs = list(ratings.keys())
     all_time_slots = list(range(6, 6 + len(all_programs)))  # dynamic timeslot range
 
@@ -134,5 +131,5 @@ if uploaded_file:
         st.write("### 📈 Fitness Progress")
         st.line_chart(fitness_history)
 
-else:
-    st.info("👆 Please upload your `program_ratings_modified.csv` file to begin.")
+except FileNotFoundError:
+    st.error("❌ File 'program_ratings_modified.csv' not found. Please make sure it’s in the same folder as this app.")
