@@ -1,21 +1,18 @@
-import streamlit as st
+import io
 import csv
-import random
-import pandas as pd
 
-# ===================== STEP 1: READ CSV =====================
-
-def read_csv_to_dict(file_path):
+def read_csv_to_dict(uploaded_file):
     program_ratings = {}
 
-    with open(file_path, mode='r', newline='') as file:
-        reader = csv.reader(file)
-        header = next(reader)  # skip header
+    # Use TextIOWrapper to read the uploaded file
+    file = io.TextIOWrapper(uploaded_file, encoding='utf-8')
+    reader = csv.reader(file)
+    header = next(reader)  # Skip header
 
-        for row in reader:
-            program = row[0]
-            ratings = [float(x) if x else 0.0 for x in row[1:]]
-            program_ratings[program] = ratings
+    for row in reader:
+        program = row[0]
+        ratings = [float(x) if x else 0.0 for x in row[1:]]
+        program_ratings[program] = ratings
 
     return program_ratings
 
