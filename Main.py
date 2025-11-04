@@ -92,10 +92,6 @@ st.sidebar.header("⚙️ Parameters")
 # Upload CSV file
 uploaded_file = st.sidebar.file_uploader("Upload Program Ratings CSV", type=["csv"])
 
-if uploaded_file:
-    ratings = read_csv_to_dict(uploaded_file)
-    all_programs = list(ratings.keys())
-    all_time_slots = list(range(6, 6 + len(all_programs)))  # dynamic timeslot range
 
     # GA Parameters
     GEN = st.sidebar.slider("Generations", 10, 500, 100, step=10)
