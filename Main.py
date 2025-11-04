@@ -1,18 +1,21 @@
-import io
+import streamlit as st
 import csv
+import random
+import pandas as pd
 
-def read_csv_to_dict(uploaded_file):
+# ===================== STEP 1: READ CSV =====================
+
+def read_csv_to_dict(file_path):
     program_ratings = {}
 
-    # Use TextIOWrapper to read the uploaded file
-    file = io.TextIOWrapper(uploaded_file, encoding='utf-8')
-    reader = csv.reader(file)
-    header = next(reader)  # Skip header
+    with open(file_path, mode='r', newline='') as file:
+        reader = csv.reader(file)
+        header = next(reader)  # skip header
 
-    for row in reader:
-        program = row[0]
-        ratings = [float(x) if x else 0.0 for x in row[1:]]
-        program_ratings[program] = ratings
+        for row in reader:
+            program = row[0]
+            ratings = [float(x) if x else 0.0 for x in row[1:]]
+            program_ratings[program] = ratings
 
     return program_ratings
 
@@ -89,6 +92,10 @@ st.sidebar.header("⚙️ Parameters")
 # Upload CSV file
 uploaded_file = st.sidebar.file_uploader("Upload Program Ratings CSV", type=["csv"])
 
+if uploaded_file:
+    ratings = read_csv_to_dict(uploaded_file)
+    all_programs = list(ratings.keys())
+    all_time_slots = list(range(6, 6 + len(all_programs)))  # dynamic timeslot range
 
     # GA Parameters
     GEN = st.sidebar.slider("Generations", 10, 500, 100, step=10)
