@@ -84,7 +84,7 @@ def genetic_algorithm(ratings, all_programs, generations, pop_size, crossover_ra
 
 st.title("📺 Genetic Algorithm TV Schedule Optimizer")
 
-st.sidebar.header("⚙️ Parameters")
+st.sidebar.header("⚙️ Genetic Algorithm Parameters")
 
 file_path = "program_ratings_modified.csv"
 
@@ -93,63 +93,66 @@ try:
     all_programs = list(ratings.keys())
     all_time_slots = list(range(6, 6 + len(all_programs)))
 
-    # Simplified parameters
-    st.sidebar.subheader("Crossover and Mutation Control")
-    CO_R = st.sidebar.slider("Crossover Rate", 0.0, 1.0, 0.8, step=0.05)
-    MUT_R = st.sidebar.slider("Mutation Rate", 0.0, 1.0, 0.05, step=0.01)
+    # ===================== TRIAL 1 PARAMETERS =====================
+    st.sidebar.subheader("Trial 1 Parameters")
+    CO_R1 = st.sidebar.slider("Crossover Rate (Trial 1)", 0.0, 1.0, 0.8, step=0.05, key="c1")
+    MUT_R1 = st.sidebar.slider("Mutation Rate (Trial 1)", 0.0, 1.0, 0.05, step=0.01, key="m1")
 
-    # Fixed parameters
+    # ===================== TRIAL 2 PARAMETERS =====================
+    st.sidebar.subheader("Trial 2 Parameters")
+    CO_R2 = st.sidebar.slider("Crossover Rate (Trial 2)", 0.0, 1.0, 0.7, step=0.05, key="c2")
+    MUT_R2 = st.sidebar.slider("Mutation Rate (Trial 2)", 0.0, 1.0, 0.10, step=0.01, key="m2")
+
+    # ===================== TRIAL 3 PARAMETERS =====================
+    st.sidebar.subheader("Trial 3 Parameters")
+    CO_R3 = st.sidebar.slider("Crossover Rate (Trial 3)", 0.0, 1.0, 0.9, step=0.05, key="c3")
+    MUT_R3 = st.sidebar.slider("Mutation Rate (Trial 3)", 0.0, 1.0, 0.02, step=0.01, key="m3")
+
+    # Fixed GA parameters
     GEN = 100
     POP = 100
     EL_S = 2
-    TRIALS = 3
 
     st.write("### Loaded Programs (Sample)")
     sample_df = pd.DataFrame(list(ratings.items()), columns=["Program", "Ratings"]).head(5)
     st.dataframe(sample_df)
 
-    if st.button("🚀 Run 3 Trials"):
-        trial_results = []
-        fitness_histories = []
+    if st.button("🚀 Run All 3 Trials"):
+        trial_settings = [
+            ("Trial 1", CO_R1, MUT_R1),
+            ("Trial 2", CO_R2, MUT_R2),
+            ("Trial 3", CO_R3, MUT_R3),
+        ]
 
-        with st.spinner("Running 3 trials of Genetic Algorithm..."):
-            for t in range(1, TRIALS + 1):
+        results = []
+
+        with st.spinner("Running all 3 trials..."):
+            for name, co_rate, mut_rate in trial_settings:
                 best_schedule, fitness_history = genetic_algorithm(
-                    ratings, all_programs, GEN, POP, CO_R, MUT_R, EL_S
+                    ratings, all_programs, GEN, POP, co_rate, mut_rate, EL_S
                 )
                 total_fitness = fitness_function(best_schedule, ratings)
-                trial_results.append((t, best_schedule, total_fitness))
-                fitness_histories.append(fitness_history)
+                results.append((name, co_rate, mut_rate, best_schedule, fitness_history, total_fitness))
 
-        # Identify best trial
-        best_trial = max(trial_results, key=lambda x: x[2])
-        st.success(f"✅ Best Trial: #{best_trial[0]} (Total Fitness = {best_trial[2]:.2f})")
+        # Display all trials
+        for name, co_rate, mut_rate, schedule, fitness_history, total_fit in results:
+            st.markdown(f"## 🧪 {name}")
+            st.write(f"**Crossover Rate:** {co_rate} | **Mutation Rate:** {mut_rate}")
+            st.metric(label="Total Fitness", value=round(total_fit, 2))
 
-        # Show results of each trial
-        st.write("### 🧪 Trial Results Summary")
-        df_summary = pd.DataFrame({
-            "Trial": [t for t, _, _ in trial_results],
-            "Total Fitness": [f for _, _, f in trial_results]
-        })
-        st.dataframe(df_summary)
+            # Display schedule
+            schedule_data = []
+            for i, program in enumerate(schedule):
+                schedule_data.append({
+                    "Time Slot": f"{all_time_slots[i]:02d}:00",
+                    "Program": program,
+                    "Rating": round(ratings[program][i], 2) if i < len(ratings[program]) else "-"
+                })
+            st.dataframe(pd.DataFrame(schedule_data))
 
-        # Show best schedule
-        st.write(f"### 🏆 Optimal Schedule from Trial {best_trial[0]}")
-        schedule_data = []
-        for i, program in enumerate(best_trial[1]):
-            schedule_data.append({
-                "Time Slot": f"{all_time_slots[i]:02d}:00",
-                "Program": program,
-                "Rating": round(ratings[program][i], 2) if i < len(ratings[program]) else "-"
-            })
-        st.dataframe(pd.DataFrame(schedule_data))
-
-        # Plot all fitness progress lines
-        st.write("### 📈 Fitness Progress Across 3 Trials")
-        fitness_df = pd.DataFrame({
-            f"Trial {i+1}": fitness_histories[i] for i in range(TRIALS)
-        })
-        st.line_chart(fitness_df)
+            # Display fitness chart
+            st.line_chart(fitness_history)
+            st.divider()
 
 except FileNotFoundError:
     st.error("❌ File 'program_ratings_modified.csv' not found. Please make sure it’s in the same folder as this app.")
