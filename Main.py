@@ -7,13 +7,16 @@ import pandas as pd
 
 def read_csv_to_dict(file_path):
     program_ratings = {}
-    with open(file_path, mode='r', newline='') as file:
-        reader = csv.reader(file)
-        header = next(reader)  # skip header
-        for row in reader:
-            program = row[0]
-            ratings = [float(x) if x else 0.0 for x in row[1:]]
-            program_ratings[program] = ratings
+    try:
+        with open(file_path, mode='r', newline='') as file:
+            reader = csv.reader(file)
+            header = next(reader)  # skip header
+            for row in reader:
+                program = row[0]
+                ratings = [float(x) if x else 0.0 for x in row[1:]]
+                program_ratings[program] = ratings
+    except FileNotFoundError:
+        st.error("❌ File 'program_ratings_modified.csv' not found. Please make sure it’s in the same folder as this app.")
     return program_ratings
 
 
@@ -87,26 +90,26 @@ st.title("📺 Genetic Algorithm TV Schedule Optimizer")
 st.sidebar.header("⚙️ Genetic Algorithm Parameters")
 
 file_path = "program_ratings_modified.csv"
+ratings = read_csv_to_dict(file_path)
 
-try:
-    ratings = read_csv_to_dict(file_path)
+if ratings:
     all_programs = list(ratings.keys())
     all_time_slots = list(range(6, 6 + len(all_programs)))
 
     # ===================== TRIAL 1 PARAMETERS =====================
     st.sidebar.subheader("Trial 1 Parameters")
-    CO_R1 = st.sidebar.slider("Crossover Rate (Trial 1)", 0.0, 1.0, 0.8, step=0.05, key="c1")
-    MUT_R1 = st.sidebar.slider("Mutation Rate (Trial 1)", 0.0, 1.0, 0.2, step=0.01, key="m1")
+    CO_R1 = st.sidebar.slider("Crossover Rate (Trial 1)", 0.0, 1.0, 0.8, step=0.05, key="co1")
+    MUT_R1 = st.sidebar.slider("Mutation Rate (Trial 1)", 0.0, 1.0, 0.2, step=0.01, key="mu1")
 
     # ===================== TRIAL 2 PARAMETERS =====================
     st.sidebar.subheader("Trial 2 Parameters")
-    CO_R2 = st.sidebar.slider("Crossover Rate (Trial 2)", 0.0, 1.0, 0.8, step=0.05, key="c2")
-    MUT_R2 = st.sidebar.slider("Mutation Rate (Trial 2)", 0.0, 1.0, 0.2, step=0.01, key="m2")
+    CO_R2 = st.sidebar.slider("Crossover Rate (Trial 2)", 0.0, 1.0, 0.8, step=0.05, key="co2")
+    MUT_R2 = st.sidebar.slider("Mutation Rate (Trial 2)", 0.0, 1.0, 0.2, step=0.01, key="mu2")
 
     # ===================== TRIAL 3 PARAMETERS =====================
     st.sidebar.subheader("Trial 3 Parameters")
-    CO_R3 = st.sidebar.slider("Crossover Rate (Trial 3)", 0.0, 1.0, 0.8, step=0.05, key="c3")
-    MUT_R3 = st.sidebar.slider("Mutation Rate (Trial 3)", 0.0, 1.0, 0.2, step=0.01, key="m3")
+    CO_R3 = st.sidebar.slider("Crossover Rate (Trial 3)", 0.0, 1.0, 0.8, step=0.05, key="co3")
+    MUT_R3 = st.sidebar.slider("Mutation Rate (Trial 3)", 0.0, 1.0, 0.2, step=0.01, key="mu3")
 
     # Fixed GA parameters
     GEN = 100
@@ -153,6 +156,3 @@ try:
             # Display fitness chart
             st.line_chart(fitness_history)
             st.divider()
-
-except FileNotFoundError:
-    st.error("❌ File 'program_ratings_modified.csv' not found. Please make sure it’s in the same folder as this app.")
