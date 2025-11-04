@@ -94,12 +94,16 @@ try:
     all_programs = list(ratings.keys())
     all_time_slots = list(range(6, 6 + len(all_programs)))  # dynamic timeslot range
 
-    # GA Parameters
-    GEN = st.sidebar.slider("Generations", 10, 500, 100, step=10)
-    POP = st.sidebar.slider("Population Size", 10, 300, 100, step=10)
+    # ===================== Simplified Parameters =====================
+    st.sidebar.subheader("Crossover and Mutation Control")
+
     CO_R = st.sidebar.slider("Crossover Rate", 0.0, 1.0, 0.8, step=0.05)
     MUT_R = st.sidebar.slider("Mutation Rate", 0.0, 1.0, 0.05, step=0.01)
-    EL_S = st.sidebar.slider("Elitism Size", 1, 10, 2)
+
+    # Hidden/default GA parameters
+    GEN = 100          # fixed number of generations
+    POP = 100          # fixed population size
+    EL_S = 2           # fixed elitism size
 
     st.write("### Loaded Programs (Sample)")
     sample_df = pd.DataFrame(list(ratings.items()), columns=["Program", "Ratings"]).head(5)
