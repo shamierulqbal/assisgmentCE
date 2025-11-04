@@ -86,42 +86,57 @@ st.title("📺 Genetic Algorithm TV Schedule Optimizer")
 
 st.sidebar.header("⚙️ Parameters")
 
-# Auto-load CSV file (no upload needed)
 file_path = "program_ratings_modified.csv"
 
 try:
     ratings = read_csv_to_dict(file_path)
     all_programs = list(ratings.keys())
-    all_time_slots = list(range(6, 6 + len(all_programs)))  # dynamic timeslot range
+    all_time_slots = list(range(6, 6 + len(all_programs)))
 
-    # ===================== Simplified Parameters =====================
+    # Simplified parameters
     st.sidebar.subheader("Crossover and Mutation Control")
-
     CO_R = st.sidebar.slider("Crossover Rate", 0.0, 1.0, 0.8, step=0.05)
     MUT_R = st.sidebar.slider("Mutation Rate", 0.0, 1.0, 0.05, step=0.01)
 
-    # Hidden/default GA parameters
-    GEN = 100          # fixed number of generations
-    POP = 100          # fixed population size
-    EL_S = 2           # fixed elitism size
+    # Fixed parameters
+    GEN = 100
+    POP = 100
+    EL_S = 2
+    TRIALS = 3
 
     st.write("### Loaded Programs (Sample)")
     sample_df = pd.DataFrame(list(ratings.items()), columns=["Program", "Ratings"]).head(5)
     st.dataframe(sample_df)
 
-    if st.button("🚀 Run Genetic Algorithm"):
-        with st.spinner("Running Genetic Algorithm..."):
-            best_schedule, fitness_history = genetic_algorithm(
-                ratings, all_programs, GEN, POP, CO_R, MUT_R, EL_S
-            )
+    if st.button("🚀 Run 3 Trials"):
+        trial_results = []
+        fitness_histories = []
 
-        # Show final schedule
-        st.success("✅ Optimization Completed!")
-        total_fitness = fitness_function(best_schedule, ratings)
+        with st.spinner("Running 3 trials of Genetic Algorithm..."):
+            for t in range(1, TRIALS + 1):
+                best_schedule, fitness_history = genetic_algorithm(
+                    ratings, all_programs, GEN, POP, CO_R, MUT_R, EL_S
+                )
+                total_fitness = fitness_function(best_schedule, ratings)
+                trial_results.append((t, best_schedule, total_fitness))
+                fitness_histories.append(fitness_history)
 
-        st.write("### 🏆 Optimal Schedule")
+        # Identify best trial
+        best_trial = max(trial_results, key=lambda x: x[2])
+        st.success(f"✅ Best Trial: #{best_trial[0]} (Total Fitness = {best_trial[2]:.2f})")
+
+        # Show results of each trial
+        st.write("### 🧪 Trial Results Summary")
+        df_summary = pd.DataFrame({
+            "Trial": [t for t, _, _ in trial_results],
+            "Total Fitness": [f for _, _, f in trial_results]
+        })
+        st.dataframe(df_summary)
+
+        # Show best schedule
+        st.write(f"### 🏆 Optimal Schedule from Trial {best_trial[0]}")
         schedule_data = []
-        for i, program in enumerate(best_schedule):
+        for i, program in enumerate(best_trial[1]):
             schedule_data.append({
                 "Time Slot": f"{all_time_slots[i]:02d}:00",
                 "Program": program,
@@ -129,11 +144,12 @@ try:
             })
         st.dataframe(pd.DataFrame(schedule_data))
 
-        st.metric(label="Total Fitness (Total Ratings)", value=round(total_fitness, 2))
-
-        # Plot fitness over generations
-        st.write("### 📈 Fitness Progress")
-        st.line_chart(fitness_history)
+        # Plot all fitness progress lines
+        st.write("### 📈 Fitness Progress Across 3 Trials")
+        fitness_df = pd.DataFrame({
+            f"Trial {i+1}": fitness_histories[i] for i in range(TRIALS)
+        })
+        st.line_chart(fitness_df)
 
 except FileNotFoundError:
     st.error("❌ File 'program_ratings_modified.csv' not found. Please make sure it’s in the same folder as this app.")
