@@ -96,17 +96,17 @@ try:
     # ===================== TRIAL 1 PARAMETERS =====================
     st.sidebar.subheader("Trial 1 Parameters")
     CO_R1 = st.sidebar.slider("Crossover Rate (Trial 1)", 0.0, 1.0, 0.8, step=0.05, key="c1")
-    MUT_R1 = st.sidebar.slider("Mutation Rate (Trial 1)", 0.0, 1.0, 0.05, step=0.01, key="m1")
+    MUT_R1 = st.sidebar.slider("Mutation Rate (Trial 1)", 0.0, 1.0, 0.2, step=0.01, key="m1")
 
     # ===================== TRIAL 2 PARAMETERS =====================
     st.sidebar.subheader("Trial 2 Parameters")
-    CO_R2 = st.sidebar.slider("Crossover Rate (Trial 2)", 0.0, 1.0, 0.7, step=0.05, key="c2")
-    MUT_R2 = st.sidebar.slider("Mutation Rate (Trial 2)", 0.0, 1.0, 0.10, step=0.01, key="m2")
+    CO_R2 = st.sidebar.slider("Crossover Rate (Trial 2)", 0.0, 1.0, 0.8, step=0.05, key="c2")
+    MUT_R2 = st.sidebar.slider("Mutation Rate (Trial 2)", 0.0, 1.0, 0.2, step=0.01, key="m2")
 
     # ===================== TRIAL 3 PARAMETERS =====================
     st.sidebar.subheader("Trial 3 Parameters")
-    CO_R3 = st.sidebar.slider("Crossover Rate (Trial 3)", 0.0, 1.0, 0.9, step=0.05, key="c3")
-    MUT_R3 = st.sidebar.slider("Mutation Rate (Trial 3)", 0.0, 1.0, 0.02, step=0.01, key="m3")
+    CO_R3 = st.sidebar.slider("Crossover Rate (Trial 3)", 0.0, 1.0, 0.8, step=0.05, key="c3")
+    MUT_R3 = st.sidebar.slider("Mutation Rate (Trial 3)", 0.0, 1.0, 0.2, step=0.01, key="m3")
 
     # Fixed GA parameters
     GEN = 100
