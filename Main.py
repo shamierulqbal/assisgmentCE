@@ -31,6 +31,9 @@ def read_csv_to_dict(file_path):
         st.error(f"❌ File '{file_path}' not found. Please make sure it’s in the same folder as this app.")
     return program_ratings
 
+    all_programs = list(ratings.keys())
+    all_time_slots = list(range(6, 24))
+
 
 # ===================== STEP 2: GENETIC ALGORITHM FUNCTIONS =====================
 
