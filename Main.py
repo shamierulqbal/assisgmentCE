@@ -47,8 +47,8 @@ if uploaded_file is not None:
 
     # ---------------- PARAMETERS ----------------
     ratings = program_ratings_dict
-    NUM_SLOTS = 23  # 06:00 → 04:00 next day
-    all_time_slots = [(6 + i) % 24 for i in range(NUM_SLOTS)]
+    NUM_SLOTS = 23  # ✅ Fixed to 23 hours (06:00 → 04:00 next day)
+    all_time_slots = [(6 + i) % 24 for i in range(NUM_SLOTS)]  # 6 AM start, wraps around after midnight
     time_labels = [f"{h:02d}:00" for h in all_time_slots]
 
     # ✅ Fixed GA parameters
@@ -64,7 +64,7 @@ if uploaded_file is not None:
     st.sidebar.header("⚙️ GA Parameters for 3 Trials (adjust Crossover & Mutation only)")
     trial_params = []
     default_settings = [(0.80, 0.02), (0.90, 0.03), (0.70, 0.05)]
-    for i in range(1, 3 + 1):
+    for i in range(1, 4):
         st.sidebar.subheader(f"Trial {i}")
         d_co, d_mut = default_settings[i - 1]
         co_r = st.sidebar.slider(
@@ -191,6 +191,12 @@ if uploaded_file is not None:
         st.dataframe(best_df, use_container_width=True, height=600)
         st.success(f"✅ Best Total Ratings: {best_trial['fitness']:.2f} | Crossover: {best_trial['crossover']} | Mutation: {best_trial['mutation']}")
 
+        # show charts
+        st.subheader("📈 Fitness Progress (per generation)")
+        cols = st.columns(3)
+        for col, tr in zip(cols, trial_results):
+            col.write(f"Trial {tr['trial']} (C={tr['crossover']}, M={tr['mutation']})")
+            col.line_chart(pd.DataFrame({"Fitness": tr["history"]}))
 
 else:
     st.info("👆 Please upload a CSV file to start.")
