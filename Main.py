@@ -56,12 +56,20 @@ if uploaded_file is not None:
     POP = 50
     EL_S = 2
 
+    all_programs = list(ratings.keys())
     st.write(f"✅ Loaded **{len(ratings)}** programs. Optimizing across **{NUM_SLOTS}** hourly slots (06:00 → 23:00).")
     st.write(f"⚙️ Fixed GA Settings → Generations: {GEN}, Population: {POP}, Elitism: {EL_S}")
 
-    # ---------------- TRIAL SETTINGS ----------------
-    st.sidebar.header("⚙️ GA Parameters for 3 Trials (fixed generation/population/elitism)")
-    trial_params = [(0.80, 0.10), (0.70, 0.30), (0.90, 0.05)]
+    # ---------------- SLIDERS FOR 3 TRIALS ----------------
+    st.sidebar.header("⚙️ GA Parameters for 3 Trials (adjust Crossover & Mutation only)")
+    trial_params = []
+    default_settings = [(0.80, 0.10), (0.70, 0.30), (0.90, 0.05)]
+    for i in range(1, 3 + 1):
+        st.sidebar.subheader(f"Trial {i}")
+        d_co, d_mut = default_settings[i - 1]
+        co_r = st.sidebar.slider(f"Trial {i} - Crossover Rate", 0.0, 1.0, float(d_co), 0.01, key=f"co_r_{i}")
+        mut_r = st.sidebar.slider(f"Trial {i} - Mutation Rate", 0.0, 1.0, float(d_mut), 0.01, key=f"mut_r_{i}")
+        trial_params.append((co_r, mut_r))
 
     st.write("### Sample Program Ratings (first 5 programs)")
     sample_df = pd.DataFrame(list(ratings.items()), columns=["Program", "Ratings"]).head(5)
@@ -136,7 +144,7 @@ if uploaded_file is not None:
         for i, (co_r, mut_r) in enumerate(trial_params, start=1):
             with st.spinner(f"Running Trial {i} (Crossover={co_r}, Mutation={mut_r})..."):
                 best_schedule, fitness_history = genetic_algorithm(
-                    list(ratings.keys()),
+                    all_programs,
                     NUM_SLOTS,
                     generations=GEN,
                     population_size=POP,
@@ -144,7 +152,6 @@ if uploaded_file is not None:
                     mutation_rate=mut_r,
                     elitism_size=EL_S
                 )
-
             total_rating = fitness_function(best_schedule)
             trial_results.append({
                 "trial": i,
@@ -154,7 +161,6 @@ if uploaded_file is not None:
                 "mutation": mut_r,
                 "history": fitness_history
             })
-
             st.write(f"**Trial {i}** — Crossover: `{co_r}` | Mutation: `{mut_r}` | Total Rating: **{total_rating:.2f}**")
             preview_df = pd.DataFrame({
                 "Time Slot": time_labels,
