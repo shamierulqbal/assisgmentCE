@@ -177,7 +177,7 @@ if uploaded_file is not None:
                     for idx, p in enumerate(best_schedule[:NUM_SLOTS])
                 ]
             })
-            st.dataframe(preview_df, use_container_width=True, height=600)
+            st.dataframe(preview_df, use_container_width=True, height=900)
 
         best_trial = max(trial_results, key=lambda x: x["fitness"])
         st.subheader(f"🏆 Best Schedule — Trial {best_trial['trial']}")
