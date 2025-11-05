@@ -14,7 +14,6 @@ if uploaded_file is not None:
     # ---------------- READ CSV ----------------
     def read_csv_to_dict(file_bytes):
         program_ratings = {}
-        # decode and iterate lines
         lines = file_bytes.decode("utf-8-sig").splitlines()
         reader = csv.reader(lines)
         header = next(reader, None)
@@ -36,7 +35,6 @@ if uploaded_file is not None:
                         ratings.append(float(x) if x.strip() != "" else 0.0)
                     except ValueError:
                         ratings.append(0.0)
-            # only keep programs with at least one rating
             if ratings:
                 program_ratings[program] = ratings
 
@@ -49,13 +47,11 @@ if uploaded_file is not None:
 
     # ---------------- PARAMETERS ----------------
     ratings = program_ratings_dict
-
-    # Fixed 23-hour schedule starting 06:00 (6 AM) for 23 slots -> 06:00 to 04:00 next day
-    NUM_SLOTS = 23
+    NUM_SLOTS = 23  # 06:00 → 04:00 (next day)
     all_time_slots = [(6 + i) % 24 for i in range(NUM_SLOTS)]
     time_labels = [f"{h:02d}:00" for h in all_time_slots]
 
-    # GA defaults (editable)
+    # GA defaults
     GEN = st.sidebar.number_input("Generations", min_value=10, max_value=2000, value=200, step=10)
     POP = st.sidebar.number_input("Population Size", min_value=10, max_value=1000, value=200, step=10)
     EL_S = st.sidebar.number_input("Elitism (top survivors)", min_value=1, max_value=10, value=2, step=1)
@@ -67,7 +63,6 @@ if uploaded_file is not None:
     # ---------------- SLIDERS FOR 3 TRIALS ----------------
     st.sidebar.header("⚙️ GA Parameters for 3 Trials (suggested presets)")
     trial_params = []
-    # Provide suggested default values per your earlier request
     default_settings = [(0.80, 0.10), (0.70, 0.30), (0.90, 0.05)]
     for i in range(1, 4):
         st.sidebar.subheader(f"Trial {i}")
@@ -82,80 +77,70 @@ if uploaded_file is not None:
 
     # ---------------- GA HELPERS ----------------
     def fitness_function(schedule):
-        """Sum of ratings for schedule across NUM_SLOTS. If a program has fewer ratings than the slot index, treat that rating as 0."""
+        """Calculate total rating for a 23-hour schedule."""
         total_rating = 0.0
         for time_slot, program in enumerate(schedule):
             if program in ratings and time_slot < len(ratings[program]):
                 total_rating += ratings[program][time_slot]
-            # else add 0.0
         return total_rating
 
     def initialize_population(program_list, population_size, num_slots):
-        """Create a population of random schedules (with replacement allowed)."""
+        """Create random population of fixed 23-hour schedules."""
         population = []
         for _ in range(population_size):
-            schedule = random.choices(program_list, k=num_slots)  # allow repeats across hours
-            population.append(schedule)
+            schedule = random.choices(program_list, k=num_slots)
+            population.append(schedule[:num_slots])
         return population
 
     def crossover(schedule1, schedule2):
-        """One-point crossover producing two children. Ensures children length == NUM_SLOTS."""
-        if len(schedule1) != len(schedule2):
-            # fallback: return copies
+        """One-point crossover (fixed to 23-hour schedule)."""
+        length = min(len(schedule1), len(schedule2), NUM_SLOTS)
+        if length < 2:
             return schedule1.copy(), schedule2.copy()
-        point = random.randint(1, len(schedule1) - 2)
-        child1 = schedule1[:point] + schedule2[point:]
-        child2 = schedule2[:point] + schedule1[point:]
+        point = random.randint(1, length - 1)
+        child1 = (schedule1[:point] + schedule2[point:])[:NUM_SLOTS]
+        child2 = (schedule2[:point] + schedule1[point:])[:NUM_SLOTS]
         return child1, child2
 
     def mutate(schedule, program_list):
-        """Replace one random position in schedule with a randomly chosen program."""
+        """Mutate one random hour in schedule."""
         if not schedule:
             return schedule
         idx = random.randrange(len(schedule))
         schedule[idx] = random.choice(program_list)
-        return schedule
+        return schedule[:NUM_SLOTS]
 
     def genetic_algorithm(program_list, num_slots, generations=100, population_size=100,
                           crossover_rate=0.8, mutation_rate=0.1, elitism_size=2):
-        """Run GA and return best schedule and its fitness history."""
-        # initialize population (random schedules)
+        """Run GA and return best 23-hour schedule."""
         population = initialize_population(program_list, population_size, num_slots)
         fitness_history = []
 
         for gen in range(generations):
-            # evaluate and sort
             population.sort(key=lambda s: fitness_function(s), reverse=True)
-
-            # store best fitness
             best_fitness = fitness_function(population[0])
             fitness_history.append(best_fitness)
 
-            # create new population with elitism
             new_pop = population[:elitism_size]
 
-            # fill remainder of new_pop
             while len(new_pop) < population_size:
                 parent1, parent2 = random.choices(population, k=2)
-                # crossover
                 if random.random() < crossover_rate:
                     child1, child2 = crossover(parent1, parent2)
                 else:
                     child1, child2 = parent1.copy(), parent2.copy()
-                # mutation
                 if random.random() < mutation_rate:
                     child1 = mutate(child1, program_list)
                 if random.random() < mutation_rate:
                     child2 = mutate(child2, program_list)
-                new_pop.append(child1)
+                new_pop.append(child1[:num_slots])
                 if len(new_pop) < population_size:
-                    new_pop.append(child2)
+                    new_pop.append(child2[:num_slots])
 
             population = new_pop
 
-        # final best
         population.sort(key=lambda s: fitness_function(s), reverse=True)
-        best = population[0]
+        best = population[0][:num_slots]
         return best, fitness_history
 
     # ---------------- RUN BUTTON ----------------
@@ -163,7 +148,6 @@ if uploaded_file is not None:
         st.subheader("🎯 Results of 3 Trials")
         trial_results = []
 
-        # Run GA for each trial configuration
         for i, (co_r, mut_r) in enumerate(trial_params, start=1):
             with st.spinner(f"Running Trial {i} (Crossover={co_r}, Mutation={mut_r})..."):
                 best_schedule, fitness_history = genetic_algorithm(
@@ -185,7 +169,6 @@ if uploaded_file is not None:
                 "history": fitness_history
             })
             st.write(f"**Trial {i}** — Crossover: `{co_r}` | Mutation: `{mut_r}` | Total Rating: **{total_rating:.2f}**")
-            # show small preview table
             preview_df = pd.DataFrame({
                 "Time Slot": time_labels,
                 "Program": best_schedule[:NUM_SLOTS],
@@ -196,7 +179,6 @@ if uploaded_file is not None:
             })
             st.dataframe(preview_df, height=300)
 
-        # show best trial overall
         best_trial = max(trial_results, key=lambda x: x["fitness"])
         st.subheader(f"🏆 Best Schedule — Trial {best_trial['trial']}")
         best_df = pd.DataFrame({
@@ -210,12 +192,12 @@ if uploaded_file is not None:
         st.table(best_df)
         st.success(f"✅ Best Total Ratings: {best_trial['fitness']:.2f} | Crossover: {best_trial['crossover']} | Mutation: {best_trial['mutation']}")
 
-        # show fitness charts side by side
-        st.subheader("Fitness Progress (per generation)")
+        # show charts
+        st.subheader("📈 Fitness Progress (per generation)")
         cols = st.columns(3)
         for col, tr in zip(cols, trial_results):
             col.write(f"Trial {tr['trial']} (C={tr['crossover']}, M={tr['mutation']})")
-            col.line_chart(pd.DataFrame({"fitness": tr["history"]}))
+            col.line_chart(pd.DataFrame({"Fitness": tr["history"]}))
 
 else:
     st.info("👆 Please upload a CSV file to start.")
