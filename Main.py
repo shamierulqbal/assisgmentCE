@@ -52,8 +52,9 @@ if uploaded_file is not None:
             total_rating += ratings[program][time_slot]
         return total_rating
 
+    # SAFE initialization (no factorial explosion)
     def initialize_pop(programs, time_slots):
-        # Safety limit: avoid recursion explosion
+        # Limit recursion for safety
         if len(programs) > 10:
             return [random.sample(programs, len(programs))]
         if not programs:
@@ -64,6 +65,14 @@ if uploaded_file is not None:
                 all_schedules.append([programs[i]] + schedule)
         return all_schedules
 
+    # Try to build initial population safely
+    try:
+        all_possible_schedules = initialize_pop(all_programs, all_time_slots)
+        best_schedule = random.choice(all_possible_schedules)
+    except RecursionError:
+        # Fallback if still too large
+        best_schedule = random.sample(all_programs, len(all_programs))
+
     def finding_best_schedule(all_schedules):
         best_schedule = []
         max_ratings = 0
@@ -72,10 +81,7 @@ if uploaded_file is not None:
             if total_ratings > max_ratings:
                 max_ratings = total_ratings
                 best_schedule = schedule
-        return best_schedule
-
-    all_possible_schedules = initialize_pop(all_programs, all_time_slots)
-    best_schedule = finding_best_schedule(all_possible_schedules)
+        return best_schedule if best_schedule else random.sample(all_programs, len(all_programs))
 
     def crossover(schedule1, schedule2):
         crossover_point = random.randint(1, len(schedule1) - 2)
@@ -126,7 +132,7 @@ if uploaded_file is not None:
         st.subheader("🎯 Results of 3 Trials")
         trial_results = []
 
-        initial_best_schedule = finding_best_schedule(all_possible_schedules)
+        initial_best_schedule = best_schedule
         rem_t_slots = len(all_time_slots) - len(initial_best_schedule)
 
         progress = st.progress(0)
@@ -155,10 +161,9 @@ if uploaded_file is not None:
             "Time Slot": [f"{t:02d}:00" for t in all_time_slots],
             "Program": best_schedule[:len(all_time_slots)]
         })
-        st.table(df)
+        st.dataframe(df, use_container_width=True)
         st.success(f"✅ Best Total Ratings: {best_total:.2f} | Crossover: {best_co} | Mutation: {best_mut}")
 
-        # Memory cleanup
         gc.collect()
 
 else:
