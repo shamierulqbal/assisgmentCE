@@ -177,7 +177,7 @@ if uploaded_file is not None:
                     for idx, p in enumerate(best_schedule[:NUM_SLOTS])
                 ]
             })
-            st.dataframe(preview_df, height=300)
+            st.dataframe(preview_df, use_container_width=True, height=600)
 
         best_trial = max(trial_results, key=lambda x: x["fitness"])
         st.subheader(f"🏆 Best Schedule — Trial {best_trial['trial']}")
@@ -189,7 +189,7 @@ if uploaded_file is not None:
                 for idx, p in enumerate(best_trial["schedule"][:NUM_SLOTS])
             ]
         })
-        st.table(best_df)
+        st.dataframe(best_df, use_container_width=True, height=600)
         st.success(f"✅ Best Total Ratings: {best_trial['fitness']:.2f} | Crossover: {best_trial['crossover']} | Mutation: {best_trial['mutation']}")
 
         # show charts
