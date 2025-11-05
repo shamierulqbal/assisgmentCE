@@ -51,25 +51,17 @@ if uploaded_file is not None:
     all_time_slots = list(range(6, 24))  # from 06:00 to 23:00
     time_labels = [f"{h:02d}:00" for h in all_time_slots]
 
-    # GA defaults
-    GEN = st.sidebar.number_input("Generations", min_value=10, max_value=2000, value=200, step=10)
-    POP = st.sidebar.number_input("Population Size", min_value=10, max_value=1000, value=200, step=10)
-    EL_S = st.sidebar.number_input("Elitism (top survivors)", min_value=1, max_value=10, value=2, step=1)
+    # ✅ Fixed GA parameters
+    GEN = 100
+    POP = 50
+    EL_S = 2
 
-    all_programs = list(ratings.keys())
-    st.sidebar.markdown(f"**Programs loaded:** {len(all_programs)}")
     st.write(f"✅ Loaded **{len(ratings)}** programs. Optimizing across **{NUM_SLOTS}** hourly slots (06:00 → 23:00).")
+    st.write(f"⚙️ Fixed GA Settings → Generations: {GEN}, Population: {POP}, Elitism: {EL_S}")
 
-    # ---------------- SLIDERS FOR 3 TRIALS ----------------
-    st.sidebar.header("⚙️ GA Parameters for 3 Trials (suggested presets)")
-    trial_params = []
-    default_settings = [(0.80, 0.10), (0.70, 0.30), (0.90, 0.05)]
-    for i in range(1, 4):
-        st.sidebar.subheader(f"Trial {i}")
-        d_co, d_mut = default_settings[i - 1]
-        co_r = st.sidebar.slider(f"Trial {i} - Crossover Rate", 0.0, 1.0, float(d_co), 0.01, key=f"co_r_{i}")
-        mut_r = st.sidebar.slider(f"Trial {i} - Mutation Rate", 0.0, 1.0, float(d_mut), 0.01, key=f"mut_r_{i}")
-        trial_params.append((co_r, mut_r))
+    # ---------------- TRIAL SETTINGS ----------------
+    st.sidebar.header("⚙️ GA Parameters for 3 Trials (fixed generation/population/elitism)")
+    trial_params = [(0.80, 0.10), (0.70, 0.30), (0.90, 0.05)]
 
     st.write("### Sample Program Ratings (first 5 programs)")
     sample_df = pd.DataFrame(list(ratings.items()), columns=["Program", "Ratings"]).head(5)
@@ -77,7 +69,6 @@ if uploaded_file is not None:
 
     # ---------------- GA HELPERS ----------------
     def fitness_function(schedule):
-        """Calculate total rating for an 18-hour schedule."""
         total_rating = 0.0
         for time_slot, program in enumerate(schedule):
             if program in ratings and time_slot < len(ratings[program]):
@@ -85,7 +76,6 @@ if uploaded_file is not None:
         return total_rating
 
     def initialize_population(program_list, population_size, num_slots):
-        """Create random population of fixed 18-hour schedules."""
         population = []
         for _ in range(population_size):
             schedule = random.choices(program_list, k=num_slots)
@@ -93,7 +83,6 @@ if uploaded_file is not None:
         return population
 
     def crossover(schedule1, schedule2):
-        """One-point crossover (fixed to 18-hour schedule)."""
         length = min(len(schedule1), len(schedule2), NUM_SLOTS)
         if length < 2:
             return schedule1.copy(), schedule2.copy()
@@ -103,16 +92,14 @@ if uploaded_file is not None:
         return child1, child2
 
     def mutate(schedule, program_list):
-        """Mutate one random hour in schedule."""
         if not schedule:
             return schedule
         idx = random.randrange(len(schedule))
         schedule[idx] = random.choice(program_list)
         return schedule[:NUM_SLOTS]
 
-    def genetic_algorithm(program_list, num_slots, generations=100, population_size=100,
-                          crossover_rate=0.8, mutation_rate=0.1, elitism_size=2):
-        """Run GA and return best 18-hour schedule."""
+    def genetic_algorithm(program_list, num_slots, generations, population_size,
+                          crossover_rate, mutation_rate, elitism_size):
         population = initialize_population(program_list, population_size, num_slots)
         fitness_history = []
 
@@ -122,7 +109,6 @@ if uploaded_file is not None:
             fitness_history.append(best_fitness)
 
             new_pop = population[:elitism_size]
-
             while len(new_pop) < population_size:
                 parent1, parent2 = random.choices(population, k=2)
                 if random.random() < crossover_rate:
@@ -136,7 +122,6 @@ if uploaded_file is not None:
                 new_pop.append(child1[:num_slots])
                 if len(new_pop) < population_size:
                     new_pop.append(child2[:num_slots])
-
             population = new_pop
 
         population.sort(key=lambda s: fitness_function(s), reverse=True)
@@ -151,7 +136,7 @@ if uploaded_file is not None:
         for i, (co_r, mut_r) in enumerate(trial_params, start=1):
             with st.spinner(f"Running Trial {i} (Crossover={co_r}, Mutation={mut_r})..."):
                 best_schedule, fitness_history = genetic_algorithm(
-                    all_programs,
+                    list(ratings.keys()),
                     NUM_SLOTS,
                     generations=GEN,
                     population_size=POP,
@@ -159,6 +144,7 @@ if uploaded_file is not None:
                     mutation_rate=mut_r,
                     elitism_size=EL_S
                 )
+
             total_rating = fitness_function(best_schedule)
             trial_results.append({
                 "trial": i,
@@ -168,6 +154,7 @@ if uploaded_file is not None:
                 "mutation": mut_r,
                 "history": fitness_history
             })
+
             st.write(f"**Trial {i}** — Crossover: `{co_r}` | Mutation: `{mut_r}` | Total Rating: **{total_rating:.2f}**")
             preview_df = pd.DataFrame({
                 "Time Slot": time_labels,
