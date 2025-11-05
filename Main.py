@@ -47,8 +47,8 @@ if uploaded_file is not None:
 
     # ---------------- PARAMETERS ----------------
     ratings = program_ratings_dict
-    NUM_SLOTS = 23  # ✅ Fixed to 23 hours (06:00 → 04:00 next day)
-    all_time_slots = [(6 + i) % 24 for i in range(NUM_SLOTS)]  # 6 AM start, wraps around after midnight
+    NUM_SLOTS = 18  # ✅ 06:00 → 23:00 only (no midnight)
+    all_time_slots = list(range(6, 24))  # 6 AM to 11 PM
     time_labels = [f"{h:02d}:00" for h in all_time_slots]
 
     # ✅ Fixed GA parameters
@@ -57,7 +57,7 @@ if uploaded_file is not None:
     EL_S = 2
 
     all_programs = list(ratings.keys())
-    st.write(f"✅ Loaded **{len(ratings)}** programs. Optimizing across **{NUM_SLOTS}** hourly slots (06:00 → 04:00).")
+    st.write(f"✅ Loaded **{len(ratings)}** programs. Optimizing across **{NUM_SLOTS}** hourly slots (06:00 → 23:00).")
     st.write(f"⚙️ Fixed GA Settings → Generations: {GEN}, Population: {POP}, Elitism: {EL_S}")
 
     # ---------------- SLIDERS FOR 3 TRIALS ----------------
