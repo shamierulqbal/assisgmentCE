@@ -8,15 +8,27 @@ import pandas as pd
 def read_csv_to_dict(file_path):
     program_ratings = {}
     try:
-        with open(file_path, mode='r', newline='') as file:
+        with open(file_path, mode='r', newline='', encoding='utf-8-sig') as file:
             reader = csv.reader(file)
-            header = next(reader)  # skip header
+            header = next(reader, None)  # skip header
+            if not header:
+                st.error("❌ CSV file is empty or has no header.")
+                return {}
+
             for row in reader:
-                program = row[0]
-                ratings = [float(x) if x else 0.0 for x in row[1:]]
+                if not row:
+                    continue
+                program = row[0].strip()
+                try:
+                    ratings = [float(x) if x.strip() else 0.0 for x in row[1:]]
+                except ValueError:
+                    ratings = [0.0 for _ in row[1:]]
                 program_ratings[program] = ratings
+
+        if not program_ratings:
+            st.warning("⚠️ No valid data found in CSV.")
     except FileNotFoundError:
-        st.error("❌ File 'program_ratings_modified.csv' not found. Please make sure it’s in the same folder as this app.")
+        st.error(f"❌ File '{file_path}' not found. Please make sure it’s in the same folder as this app.")
     return program_ratings
 
 
@@ -94,7 +106,15 @@ ratings = read_csv_to_dict(file_path)
 
 if ratings:
     all_programs = list(ratings.keys())
-    all_time_slots = list(range(6, 6 + len(all_programs)))
+
+    # Detect number of time slots (e.g., 23 columns)
+    num_slots = len(next(iter(ratings.values())))
+
+    # Generate 24-hour time labels starting from 06:00
+    all_time_slots = [(6 + i) % 24 for i in range(num_slots)]
+    time_labels = [f"{hour:02d}:00" for hour in all_time_slots]
+
+    st.write(f"✅ Loaded {len(ratings)} programs with {num_slots} hourly slots each.")
 
     # ===================== TRIAL 1 PARAMETERS =====================
     st.sidebar.subheader("Trial 1 Parameters")
@@ -116,10 +136,12 @@ if ratings:
     POP = 100
     EL_S = 2
 
+    # Show sample data
     st.write("### Loaded Programs (Sample)")
     sample_df = pd.DataFrame(list(ratings.items()), columns=["Program", "Ratings"]).head(5)
     st.dataframe(sample_df)
 
+    # Run trials
     if st.button("🚀 Run All 3 Trials"):
         trial_settings = [
             ("Trial 1", CO_R1, MUT_R1),
@@ -135,24 +157,28 @@ if ratings:
                     ratings, all_programs, GEN, POP, co_rate, mut_rate, EL_S
                 )
                 total_fitness = fitness_function(best_schedule, ratings)
-                results.append((name, co_rate, mut_rate, best_schedule, fitness_history, total_fitness))
+                results.append((name, co_rate, mut_rate, best_schedule, total_fitness))
 
         # Display all trials
-        for name, co_rate, mut_rate, schedule, fitness_history, total_fit in results:
+        for name, co_rate, mut_rate, schedule, total_fit in results:
             st.markdown(f"## 🧪 {name}")
             st.write(f"**Crossover Rate:** {co_rate} | **Mutation Rate:** {mut_rate}")
             st.metric(label="Total Fitness", value=round(total_fit, 2))
 
-            # Display schedule
+            # Display full 23-hour schedule
             schedule_data = []
-            for i, program in enumerate(schedule):
+            for i, program in enumerate(schedule[:num_slots]):
+                hour_label = time_labels[i] if i < len(time_labels) else "-"
+                rating_value = (
+                    round(ratings[program][i], 2)
+                    if program in ratings and i < len(ratings[program])
+                    else "-"
+                )
                 schedule_data.append({
-                    "Time Slot": f"{all_time_slots[i]:02d}:00",
+                    "Time Slot": hour_label,
                     "Program": program,
-                    "Rating": round(ratings[program][i], 2) if i < len(ratings[program]) else "-"
+                    "Rating": rating_value
                 })
-            st.dataframe(pd.DataFrame(schedule_data))
 
-            # Display fitness chart
-            st.line_chart(fitness_history)
+            st.dataframe(pd.DataFrame(schedule_data))
             st.divider()
