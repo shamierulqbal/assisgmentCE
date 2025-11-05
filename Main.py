@@ -161,7 +161,7 @@ if ratings:
 
         # Display all trials
         for name, co_rate, mut_rate, schedule, total_fit in results:
-            st.markdown(f"## 🧪 {name}")
+            st.markdown(f"##  {name}")
             st.write(f"**Crossover Rate:** {co_rate} | **Mutation Rate:** {mut_rate}")
             st.metric(label="Total Fitness", value=round(total_fit, 2))
 
