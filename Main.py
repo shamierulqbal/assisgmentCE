@@ -97,9 +97,9 @@ def genetic_algorithm(ratings, all_programs, generations, pop_size, crossover_ra
 
 # ===================== STREAMLIT INTERFACE =====================
 
-st.title("📺 Genetic Algorithm TV Schedule Optimizer")
+st.title("Genetic Algorithm TV Schedule Optimizer")
 
-st.sidebar.header("⚙️ Genetic Algorithm Parameters")
+st.sidebar.header("Genetic Algorithm Parameters")
 
 file_path = "program_ratings_modified.csv"
 ratings = read_csv_to_dict(file_path)
@@ -142,7 +142,7 @@ if ratings:
     st.dataframe(sample_df)
 
     # Run trials
-    if st.button("🚀 Run All 3 Trials"):
+    if st.button("Run All 3 Trials"):
         trial_settings = [
             ("Trial 1", CO_R1, MUT_R1),
             ("Trial 2", CO_R2, MUT_R2),
