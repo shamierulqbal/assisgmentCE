@@ -47,8 +47,8 @@ if uploaded_file is not None:
 
     # ---------------- PARAMETERS ----------------
     ratings = program_ratings_dict
-    NUM_SLOTS = 18  # 06:00 → 23:00 only
-    all_time_slots = list(range(6, 24))  # from 06:00 to 23:00
+    NUM_SLOTS = 23  # 06:00 → 04:00 next day
+    all_time_slots = [(6 + i) % 24 for i in range(NUM_SLOTS)]
     time_labels = [f"{h:02d}:00" for h in all_time_slots]
 
     # ✅ Fixed GA parameters
@@ -57,18 +57,24 @@ if uploaded_file is not None:
     EL_S = 2
 
     all_programs = list(ratings.keys())
-    st.write(f"✅ Loaded **{len(ratings)}** programs. Optimizing across **{NUM_SLOTS}** hourly slots (06:00 → 23:00).")
+    st.write(f"✅ Loaded **{len(ratings)}** programs. Optimizing across **{NUM_SLOTS}** hourly slots (06:00 → 04:00).")
     st.write(f"⚙️ Fixed GA Settings → Generations: {GEN}, Population: {POP}, Elitism: {EL_S}")
 
     # ---------------- SLIDERS FOR 3 TRIALS ----------------
     st.sidebar.header("⚙️ GA Parameters for 3 Trials (adjust Crossover & Mutation only)")
     trial_params = []
-    default_settings = [(0.80, 0.10), (0.70, 0.30), (0.90, 0.05)]
+    default_settings = [(0.80, 0.02), (0.90, 0.03), (0.70, 0.05)]
     for i in range(1, 3 + 1):
         st.sidebar.subheader(f"Trial {i}")
         d_co, d_mut = default_settings[i - 1]
-        co_r = st.sidebar.slider(f"Trial {i} - Crossover Rate", 0.0, 1.0, float(d_co), 0.01, key=f"co_r_{i}")
-        mut_r = st.sidebar.slider(f"Trial {i} - Mutation Rate", 0.0, 1.0, float(d_mut), 0.01, key=f"mut_r_{i}")
+        co_r = st.sidebar.slider(
+            f"Trial {i} - Crossover Rate",
+            0.01, 0.95, float(d_co), 0.01, key=f"co_r_{i}"
+        )
+        mut_r = st.sidebar.slider(
+            f"Trial {i} - Mutation Rate",
+            0.01, 0.05, float(d_mut), 0.01, key=f"mut_r_{i}"
+        )
         trial_params.append((co_r, mut_r))
 
     st.write("### Sample Program Ratings (first 5 programs)")
@@ -185,12 +191,6 @@ if uploaded_file is not None:
         st.dataframe(best_df, use_container_width=True, height=600)
         st.success(f"✅ Best Total Ratings: {best_trial['fitness']:.2f} | Crossover: {best_trial['crossover']} | Mutation: {best_trial['mutation']}")
 
-        # show charts
-        st.subheader("📈 Fitness Progress (per generation)")
-        cols = st.columns(3)
-        for col, tr in zip(cols, trial_results):
-            col.write(f"Trial {tr['trial']} (C={tr['crossover']}, M={tr['mutation']})")
-            col.line_chart(pd.DataFrame({"Fitness": tr["history"]}))
 
 else:
     st.info("👆 Please upload a CSV file to start.")
