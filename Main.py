@@ -47,8 +47,8 @@ if uploaded_file is not None:
 
     # ---------------- PARAMETERS ----------------
     ratings = program_ratings_dict
-    NUM_SLOTS = 23  # 06:00 → 04:00 (next day)
-    all_time_slots = [(6 + i) % 24 for i in range(NUM_SLOTS)]
+    NUM_SLOTS = 18  # 06:00 → 23:00 only
+    all_time_slots = list(range(6, 24))  # from 06:00 to 23:00
     time_labels = [f"{h:02d}:00" for h in all_time_slots]
 
     # GA defaults
@@ -58,7 +58,7 @@ if uploaded_file is not None:
 
     all_programs = list(ratings.keys())
     st.sidebar.markdown(f"**Programs loaded:** {len(all_programs)}")
-    st.write(f"✅ Loaded **{len(ratings)}** programs. Optimizing across **{NUM_SLOTS}** hourly slots (06:00 → 04:00).")
+    st.write(f"✅ Loaded **{len(ratings)}** programs. Optimizing across **{NUM_SLOTS}** hourly slots (06:00 → 23:00).")
 
     # ---------------- SLIDERS FOR 3 TRIALS ----------------
     st.sidebar.header("⚙️ GA Parameters for 3 Trials (suggested presets)")
@@ -77,7 +77,7 @@ if uploaded_file is not None:
 
     # ---------------- GA HELPERS ----------------
     def fitness_function(schedule):
-        """Calculate total rating for a 23-hour schedule."""
+        """Calculate total rating for an 18-hour schedule."""
         total_rating = 0.0
         for time_slot, program in enumerate(schedule):
             if program in ratings and time_slot < len(ratings[program]):
@@ -85,7 +85,7 @@ if uploaded_file is not None:
         return total_rating
 
     def initialize_population(program_list, population_size, num_slots):
-        """Create random population of fixed 23-hour schedules."""
+        """Create random population of fixed 18-hour schedules."""
         population = []
         for _ in range(population_size):
             schedule = random.choices(program_list, k=num_slots)
@@ -93,7 +93,7 @@ if uploaded_file is not None:
         return population
 
     def crossover(schedule1, schedule2):
-        """One-point crossover (fixed to 23-hour schedule)."""
+        """One-point crossover (fixed to 18-hour schedule)."""
         length = min(len(schedule1), len(schedule2), NUM_SLOTS)
         if length < 2:
             return schedule1.copy(), schedule2.copy()
@@ -112,7 +112,7 @@ if uploaded_file is not None:
 
     def genetic_algorithm(program_list, num_slots, generations=100, population_size=100,
                           crossover_rate=0.8, mutation_rate=0.1, elitism_size=2):
-        """Run GA and return best 23-hour schedule."""
+        """Run GA and return best 18-hour schedule."""
         population = initialize_population(program_list, population_size, num_slots)
         fitness_history = []
 
