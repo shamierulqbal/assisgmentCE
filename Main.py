@@ -4,10 +4,10 @@ import random
 import pandas as pd
 
 st.set_page_config(page_title="Program Rating Optimizer (Lecturer’s GA Version)", layout="wide")
-st.title("📺 Program Rating Optimizer (Lecturer’s GA Version)")
+st.title("Program Rating Optimizer (Lecturer’s GA Version)")
 
 # ---------------- FILE UPLOAD ----------------
-uploaded_file = st.file_uploader("📂 Upload your program_ratings.csv file", type=["csv"])
+uploaded_file = st.file_uploader("Upload your program_ratings.csv file", type=["csv"])
 
 if uploaded_file is not None:
 
@@ -58,10 +58,10 @@ if uploaded_file is not None:
 
     all_programs = list(ratings.keys())
     st.write(f"✅ Loaded **{len(ratings)}** programs. Optimizing across **{NUM_SLOTS}** hourly slots (06:00 → 23:00).")
-    st.write(f"⚙️ Fixed GA Settings → Generations: {GEN}, Population: {POP}, Elitism: {EL_S}")
+    st.write(f" Fixed GA Settings → Generations: {GEN}, Population: {POP}, Elitism: {EL_S}")
 
     # ---------------- SLIDERS FOR 3 TRIALS ----------------
-    st.sidebar.header("⚙️ GA Parameters for 3 Trials (adjust Crossover & Mutation only)")
+    st.sidebar.header(" GA Parameters for 3 Trials (adjust Crossover & Mutation only)")
     trial_params = []
     default_settings = [(0.80, 0.02), (0.90, 0.03), (0.70, 0.05)]
     for i in range(1, 4):
@@ -143,8 +143,8 @@ if uploaded_file is not None:
         return best, fitness_history
 
     # ---------------- RUN BUTTON ----------------
-    if st.button("🚀 Run 3 Trials"):
-        st.subheader("🎯 Results of 3 Trials")
+    if st.button("Run 3 Trials"):
+        st.subheader("Results of 3 Trials")
         trial_results = []
 
         for i, (co_r, mut_r) in enumerate(trial_params, start=1):
