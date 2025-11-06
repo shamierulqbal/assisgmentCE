@@ -3,7 +3,7 @@ import csv
 import random
 import pandas as pd
 
-st.set_page_config(page_title="Program Rating Optimizer (Lecturer’s GA Version)", layout="wide")
+st.set_page_config(page_title=" TV Program Rating Optimizer (GA Version)", layout="wide")
 st.title("Program Rating Optimizer (Lecturer’s GA Version)")
 
 # ---------------- FILE UPLOAD ----------------
